@@ -132,6 +132,13 @@ RANLIB=strip --strip-unneeded
 mingw:
 	$(MAKE) lua.exe
 	$(MAKE) "LUAC_T=luac.exe" luac.exe
+	ar rcu liblua.a $(CORE_O) $(LIB_O)
+	gcc -o luas.exe $(LUA_O) -llua -L. -lrpcrt4 -lwsock32
+	cp *.dll ..
+	cp *.exe ..
+	$(RANLIB) ../lua.exe
+	$(RANLIB) ../luas.exe
+
 
 posix:
 	$(MAKE) all MYCFLAGS=-DLUA_USE_POSIX
