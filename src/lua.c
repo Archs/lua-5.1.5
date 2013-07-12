@@ -346,6 +346,26 @@ static int pmain (lua_State *L) {
   if (argv[0] && argv[0][0]) progname = argv[0];
   lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
   luaL_openlibs(L);  /* open libraries */
+
+  // other libs
+  iuplua_open(L);
+  iupcontrolslua_open(L);
+  iupkey_open(L); 
+  iup_pplotlua_open(L);
+  // iuplua_close(L);
+  // cd
+  cdlua_open(L);
+  cdluaiup_open(L);
+  // iupcontrolslua_close(L);
+  // im
+  iupimlua_open(L);
+  imlua_open(L);
+  imlua_open_process(L);
+  // gl
+  iupolelua_open(L);
+  iupgllua_open(L);
+  // end other libs
+  
   lua_gc(L, LUA_GCRESTART, 0);
   s->status = handle_luainit(L);
   if (s->status != 0) return 0;

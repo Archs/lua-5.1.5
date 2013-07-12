@@ -14,11 +14,34 @@ RANLIB= ranlib
 RM= rm -f
 LIBS= -lm $(MYLIBS)
 
-MYCFLAGS= -I. -I../../src
-	   	  # -I../3rd-party/socket \
-       #    -I../3rd-party/uuid \
-       #    -I../3rd-party/pack
-MYLDFLAGS= 
+IUP_DIR=../3rd-party/libs/iup-3.8_Win32_mingw4_lib
+IM_DIR=../3rd-party/libs/im-3.8.1_Win32_mingw4_lib
+CD_DIR=../3rd-party/libs/cd-5.6.1_Win32_mingw4_lib
+
+MYCFLAGS= -I. -I../../src \
+          -I../3rd-party/include
+
+LDFLAGS_SOCKET= -luuid -lrpcrt4 -lwsock32
+
+LDFLAGS_IUP= -lgdi32 -lcomdlg32 -lcomctl32 -luuid \
+			 -lole32 -loleaut32 -limm32 \
+			 -lstdc++ -lkernel32 -lsnmpapi -lWinspool  -lopengl32
+
+LDFLAGS_IUPLUA= -liuplua51 \
+				-liupluagl51 -liupluaimglib51 \
+				-liupluaole51 \
+				-liup -liupgl\
+				-liupimglib -liupole \
+				-liupluaim51 -liupim -limlua51 -lim -limlua_process51 -lim_process\
+				-liupluacontrols51 -liupcontrols  \
+				-liupluacd51 -liupcd -lcdlua51 -liupim \
+				-lcdluaim51 -lcdluacontextplus51 -lcdlua51 -lcd -lfreetype6 \
+				-liupluaim51 -lz \
+				-L$(IUP_DIR) \
+				-L$(CD_DIR) \
+				-L$(IM_DIR)
+
+MYLDFLAGS= -static $(LDFLAGS_IUPLUA) $(LDFLAGS_IUP) $(LDFLAGS_SOCKET)
 MYLIBS=
 
 # == END OF USER SETTINGS. NO NEED TO CHANGE ANYTHING BELOW THIS LINE =========
@@ -30,27 +53,25 @@ A_NAME= lua
 LUA_A= $(A_NAME).dll
 LUA_T= lua.exe
 
+SOCKET_SRC= $(wildcard ../3rd-party/socket/*.c)
+SOCKET_SRC+= $(wildcard ../3rd-party/uuid/*.c)
+SOCKET_SRC+= $(wildcard ../3rd-party/pack/*.c)
+SOCKET_O= $(patsubst %.c,%.o,$(SOCKET_SRC))
+
+IUP_SRC= $(wildcard ../3rd-party/iup/*.c)
+IUP_O= $(patsubst %.c,%.o,$(IUP_SRC))
+CPP_SRC= $(wildcard ../3rd-party/iup/*.cpp)
+IUP_O+= $(patsubst %.cpp,%.o,$(CPP_SRC)) 
+
+IUPLUA_SRC+= $(wildcard ../3rd-party/iuplua/*.c)
+IUPLUA_O= $(patsubst %.c,%.o,$(IUPLUA_SRC))
+
 CORE_O=	lapi.o lcode.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o \
 	lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o  \
 	lundump.o lvm.o lzio.o
 LIB_O=	lauxlib.o lbaselib.o ldblib.o liolib.o lmathlib.o loslib.o ltablib.o \
 	lstrlib.o loadlib.o linit.o \
-	../3rd-party/socket/luasocket.o \
-	../3rd-party/socket/timeout.o \
-	../3rd-party/socket/buffer.o \
-	../3rd-party/socket/io.o \
-	../3rd-party/socket/auxiliar.o \
-	../3rd-party/socket/options.o \
-	../3rd-party/socket/inet.o \
-	../3rd-party/socket/tcp.o \
-	../3rd-party/socket/udp.o \
-	../3rd-party/socket/except.o \
-	../3rd-party/socket/select.o \
-	../3rd-party/socket/wsocket.o \
-	../3rd-party/socket/mime.o\
-	../3rd-party/uuid/wuuid.o\
-	../3rd-party/uuid/luuid.o\
-	../3rd-party/pack/lpack.o
+	$(SOCKET_O) $(IUP_O) $(IUPLUA_O)
 
 LUA_O=	lua.o
 
@@ -72,7 +93,7 @@ o:	$(ALL_O)
 a:	$(ALL_A)
 
 $(LUA_A): $(CORE_O) $(LIB_O)
-	$(AR) $@ -DLUA_BUILD_AS_DLL $(CORE_O) $(LIB_O)	-lrpcrt4 -lwsock32 # DLL needs all object files
+	$(AR) $@ -DLUA_BUILD_AS_DLL $(CORE_O) $(LIB_O) $(MYLDFLAGS) # DLL needs all object files
 	$(RANLIB) $@ 
 
 $(LUA_T): $(LUA_O) $(LUA_A)
@@ -133,7 +154,7 @@ mingw:
 	$(MAKE) lua.exe
 	$(MAKE) "LUAC_T=luac.exe" luac.exe
 	ar rcu liblua.a $(CORE_O) $(LIB_O)
-	gcc -o luas.exe $(LUA_O) -llua -L. -lrpcrt4 -lwsock32
+	gcc -o luas.exe $(LUA_O) -llua -L. $(MYLDFLAGS)
 	cp *.dll ..
 	cp *.exe ..
 	$(RANLIB) ../lua.exe
